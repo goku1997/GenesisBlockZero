@@ -6,7 +6,16 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
-#include <openssl/sha.h>
+//#include <openssl/sha.h>
+#include "sha256.h"
+
+unsigned char *SHA256(const unsigned char *d, size_t n,unsigned char *md) {
+  CSHA256 bob;
+  bob.Write(d,n);
+  bob.Finalize(md);
+  return md;
+}
+
 
 //Copied from Bitcoin source
 const uint64_t COIN = 100000000;
@@ -60,7 +69,7 @@ void byteswap(uint8_t *buf, int length)
 // Following two functions are borrowed from cgminer.
 char *bin2hex(const unsigned char *p, size_t len)
 {
-	char *s = malloc((len * 2) + 1);
+	char *s = (char *)malloc((len * 2) + 1);
 	unsigned int i;
 
 	if (!s)
@@ -110,7 +119,7 @@ Transaction *InitTransaction()
 {
 	Transaction *transaction;
 	
-	transaction = calloc(1, sizeof(*transaction));
+	transaction = (Transaction *)calloc(1, sizeof(*transaction));
 	if(!transaction)
 	{
 		return NULL;
@@ -175,14 +184,14 @@ int main(int argc, char *argv[])
 	scriptSig_len = timestamp_len;
 	
 	// Encode pubkey to binary and prepend pubkey size, then append the OP_CHECKSIG byte
-	transaction->pubkeyScript = malloc((pubkey_len+2)*sizeof(uint8_t));
+	transaction->pubkeyScript = (uint8_t*)malloc((pubkey_len+2)*sizeof(uint8_t));
 	pubkeyScript_len = hex2bin(transaction->pubkeyScript+1, pubkey, pubkey_len); // No error checking, yeah.
 	transaction->pubkeyScript[0] = 0x41; // A public key is 32 bytes X coordinate, 32 bytes Y coordinate and one byte 0x04, so 65 bytes i.e 0x41 in Hex.
 	pubkeyScript_len+=1;
 	transaction->pubkeyScript[pubkeyScript_len++] = OP_CHECKSIG;
 	
 	// Encode timestamp to binary
-	transaction->scriptSig = malloc(scriptSig_len*sizeof(uint8_t));
+	transaction->scriptSig = (uint8_t*)malloc(scriptSig_len*sizeof(uint8_t));
 	uint32_t scriptSig_pos = 0;
 	
 	
@@ -221,7 +230,7 @@ int main(int argc, char *argv[])
 	transaction->scriptSig[scriptSig_pos++] = (uint8_t)scriptSig_len;
 	
 	scriptSig_len += scriptSig_pos;
-	transaction->scriptSig = realloc(transaction->scriptSig, scriptSig_len*sizeof(uint8_t));
+	transaction->scriptSig = (uint8_t*)realloc(transaction->scriptSig, scriptSig_len*sizeof(uint8_t));
 	memcpy(transaction->scriptSig+scriptSig_pos, (const unsigned char *)timestamp, timestamp_len);
 	
 	// Here we are asuming some values will have the same size
@@ -241,7 +250,7 @@ int main(int argc, char *argv[])
 	
 	// Now let's serialize the data
 	uint32_t serializedData_pos = 0;
-	transaction->serializedData = malloc(serializedLen*sizeof(uint8_t));
+	transaction->serializedData = (uint8_t*)malloc(serializedLen*sizeof(uint8_t));
 	memcpy(transaction->serializedData+serializedData_pos, &transaction->version, 4);
 	serializedData_pos += 4;
 	memcpy(transaction->serializedData+serializedData_pos, &transaction->numInputs, 1);
