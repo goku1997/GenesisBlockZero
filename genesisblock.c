@@ -132,7 +132,7 @@ Transaction *InitTransaction()
 	transaction->locktime = 0;
 	transaction->prevoutIndex = 0xFFFFFFFF;
 	transaction->sequence = 0xFFFFFFFF;
-	transaction->outValue = 50*COIN;
+	transaction->outValue = 50000*COIN;
 	
 	// We initialize the previous output to 0 as there is none
 	memset(transaction->prevOutput, 0, 32);
@@ -285,7 +285,7 @@ int main(int argc, char *argv[])
 	memcpy(transaction->merkleHash, hash2, 32);
 	
 	char *merkleHash = bin2hex(transaction->merkleHash, 32);
-	byteswap(transaction->merkleHash, 32); 
+	byteswap(transaction->merkleHash, 32);
 	char *merkleHashSwapped = bin2hex(transaction->merkleHash, 32);
 	char *txScriptSig = bin2hex(transaction->scriptSig, scriptSig_len);
 	char *pubScriptSig = bin2hex(transaction->pubkeyScript, pubkeyScript_len);
@@ -303,8 +303,8 @@ int main(int argc, char *argv[])
 		uint32_t blockversion = 1;
 		memcpy(block_header, &blockversion, 4);
 		memset(block_header+4, 0, 32);
-		byteswap(transaction->merkleHash, 32); // We swapped it before, so do it again now.
-		memcpy(block_header+36, transaction->merkleHash, 32);
+		//byteswap(transaction->merkleHash, 32); // We swapped it before, so do it again now.
+		memcpy(block_header+36, "\x0d\x60\x34\x9d\x4e\xe2\x6e\x4e\xe0\x1b\x66\x3d\x26\x3e\x91\x73\xfe\xa6\x45\x8f\xef\x7b\xdf\xbd\x8b\xf0\x68\x35\x92\xd2\x9e\x03", 32);
 		memcpy(block_header+68, &unixtime, 4);
 		memcpy(block_header+72, &nBits, 4);
 		memcpy(block_header+76, &startNonce, 4);
@@ -312,6 +312,9 @@ int main(int argc, char *argv[])
 		uint32_t *pNonce = (uint32_t *)(block_header + 76);
 		uint32_t *pUnixtime = (uint32_t *)(block_header + 68);
 		unsigned int counter, start = time(NULL);
+
+
+
 		while(1)
 		{
 			SHA256(block_header, 80, block_hash1);
@@ -322,7 +325,7 @@ int main(int argc, char *argv[])
 			{
 				byteswap(block_hash2, 32);
 				char *blockHash = bin2hex(block_hash2, 32);
-				printf("\nBlock found!\nHash: %s\nNonce: %u\nUnix time: %u", blockHash, startNonce, unixtime);
+				printf("\nBlock found!\nHash: %s\nNonce: %u\nUnix time: %u\n", blockHash, startNonce, unixtime);
 				free(blockHash);
 				break;
 			}
